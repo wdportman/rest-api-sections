@@ -8,7 +8,7 @@ import os, traceback
 image_set = UploadSet('images', IMAGES)
 
 
-class Image(Resource):
+class ImageUpload(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('image',
         type=FileStorage,
@@ -57,7 +57,7 @@ class Image(Resource):
                 os.path.splitext(data['image'].filename)[1])}, 400
 
 
-class ImageServer(Resource):
+class Image(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('filename',
         type=str,
@@ -90,21 +90,3 @@ class ImageServer(Resource):
             traceback.print_exc()
             return {'message': 'error'},500
         return {'message': 'File <{}> deleted!'.format(data['filename'])},200
-#
-# def save_image(image, subfolder=''):
-#     image_name = "{}.{}".format(uuid.uuid4().hex,
-#         secure_filename(image.filename))
-#     image_path = os.path.join(app.config.root_path,
-#         'static/img', subfolder)
-#     try:
-#         os.makedirs(image_path)
-#     except:
-#         pass
-#     image_path = os.path.join(image_path, image_name)
-#     image.save(image_path)
-#     return image_name
-#
-#
-# def destroy_image(image_name, subfolder=''):
-#     os.remove(os.path.join(app.config.root_path,
-#         'static/img', subfolder, image_name))

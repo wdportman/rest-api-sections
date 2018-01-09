@@ -7,7 +7,7 @@ from security import authenticate, identity
 from resources.user import UserRegister
 from resources.item import Item, ItemList
 from resources.store import Store, StoreList
-from resources.image import Image,ImageServer,image_set
+from resources.image import Image,ImageUpload,image_set
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
@@ -30,8 +30,8 @@ api.add_resource(StoreList, '/stores')
 api.add_resource(Item, '/item/<string:name>')
 api.add_resource(ItemList, '/items')
 api.add_resource(UserRegister, '/register')
-api.add_resource(Image, '/image/upload')
-api.add_resource(ImageServer, '/image')
+api.add_resource(ImageUpload, '/image/upload')
+api.add_resource(Image, '/image')
 
 if __name__ == '__main__':
     from db import db
