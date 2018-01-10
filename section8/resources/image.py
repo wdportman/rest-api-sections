@@ -2,7 +2,7 @@ from flask_restful import Resource, reqparse
 from werkzeug import FileStorage
 from flask_uploads import UploadSet, IMAGES, UploadNotAllowed
 from flask import send_file
-from flask_jwt import jwt_required,current_identity
+from flask_jwt import jwt_required, current_identity
 import os, traceback
 
 image_set = UploadSet('images', IMAGES)
@@ -34,14 +34,17 @@ class ImageUpload(Resource):
         folder = 'user_{}'.format(user.id)
 
         # # check if the image file already exists under the current user's folder
-        # if os.path.isfile(image_set.path(data['image'].filename,folder)):
+        # if os.path.isfile(image_set.path(data['image'].filename, folder)):
         #     return {'message': 'File <{}> already exists.'.format(data['image'].filename)}, 400
         # save the image into the user's folder
         try:
             # save(self, storage, folder=None, name=None)
-            filename = image_set.save(data['image'],folder)
-            # use url(self, filename) if prefer to return url
-            return {'filename': filename}, 201
+            filename = image_set.save(data['image'], folder)
+            # here we only return the basename of the image and hide the
+            # internal folder structure from our user
+            # use image_set.url(self, filename) if prefer to return url
+            # use image_set.path(self, filename) to return the absolute path
+            return {'message': 'Image <{}> uploaded!'.format(os.path.split(filename)[1])}, 201
         except UploadNotAllowed:    # forbidden file type
             return {'message': 'Extension <{}> is not allowed.'.format(
                 os.path.splitext(data['image'].filename)[1])}, 400
@@ -60,13 +63,13 @@ class ImageUpload(Resource):
         folder = 'user_{}'.format(user.id)
 
         # check if the image file exists under the current user's folder
-        if not os.path.isfile(image_set.path(data['image'].filename,folder)):
+        if not os.path.isfile(image_set.path(data['image'].filename, folder)):
             return {'message': 'Image <{}> not found.'.format(data['image'].filename)}, 404
         # update the image if exists
         try:
-            os.remove(image_set.path(data['image'].filename,folder))
-            filename = image_set.save(data['image'],folder)
-            return {"filename": filename}, 200
+            os.remove(image_set.path(data['image'].filename, folder))
+            filename = image_set.save(data['image'], folder)
+            return {'message': 'Image <{}> updated!'.format(os.path.split(filename)[1])}, 200
         except UploadNotAllowed:    # forbidden file type
             return {'message': 'Extension <{}> is not allowed.'.format(
                 os.path.splitext(data['image'].filename)[1])}, 400
@@ -92,7 +95,9 @@ class Image(Resource):
         folder = 'user_{}'.format(user.id)
 
         try:
-            return send_file(image_set.path(data['filename'],folder))
+            # here we simmply try to send the requested file
+            # to the user with status code 200
+            return send_file(image_set.path(data['filename'], folder))
         except FileNotFoundError:
             return {'message': 'Image <{}> not found.'.format(data['filename'])}, 404
 
@@ -108,7 +113,7 @@ class Image(Resource):
         folder = 'user_{}'.format(user.id)
 
         try:
-            os.remove(image_set.path(data['filename'],folder))
+            os.remove(image_set.path(data['filename'], folder))
         except FileNotFoundError:
             return {'message': 'File <{}> not found!'.format(data['filename'])}, 404
         except:
