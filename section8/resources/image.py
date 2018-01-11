@@ -1,11 +1,11 @@
 from flask_restful import Resource, reqparse
 from werkzeug import FileStorage
-from flask_uploads import UploadSet, IMAGES, UploadNotAllowed
+from flask_uploads import UploadNotAllowed
 from flask import send_file
 from flask_jwt import jwt_required, current_identity
-import os, traceback
+import traceback
 
-image_set = UploadSet('images', IMAGES)
+from models.image import ImageModel
 
 
 class ImageUpload(Resource):
@@ -16,6 +16,7 @@ class ImageUpload(Resource):
         required=True,
         help='Please specify the file to upload.'
     )
+    parser.add_argument('filename', type=str, required=False)
 
     @jwt_required()
     def post(self):
@@ -31,23 +32,25 @@ class ImageUpload(Resource):
 
         # we use a sub folder for each user using the user.id
         user = current_identity
-        folder = 'user_{}'.format(user.id)
+        image_helper = ImageModel(user)
+        data['filename'] = image_helper.get_true_filename(**data)
+        if not image_helper.is_filename_safe(data['filename']):
+            return {'message': f'Filename <{data["filename"]}> is illegal.'}, 400
 
         # # check if the image file already exists under the current user's folder
-        # if os.path.isfile(image_set.path(data['image'].filename, folder)):
-        #     return {'message': 'File <{}> already exists.'.format(data['image'].filename)}, 400
+        # if image_helper.exists(data['filename']):
+        #     return {'message': f'File <{data["filename"]}> already exists.'}, 400
         # save the image into the user's folder
         try:
             # save(self, storage, folder=None, name=None)
-            filename = image_set.save(data['image'], folder)
+            saved_filename = image_helper.save_to_disk(**data)
             # here we only return the basename of the image and hide the
             # internal folder structure from our user
-            # use image_set.url(self, filename) if prefer to return url
-            # use image_set.path(self, filename) to return the absolute path
-            return {'message': 'Image <{}> uploaded!'.format(os.path.split(filename)[1])}, 201
+            basename = image_helper.get_basename(saved_filename)
+            return {'message': f'Image <{basename}> uploaded!'}, 201
         except UploadNotAllowed:    # forbidden file type
-            return {'message': 'Extension <{}> is not allowed.'.format(
-                os.path.splitext(data['image'].filename)[1])}, 400
+            extension = image_helper.get_extension(data['filename'])
+            return {'message': f'Extension <{extension}> is not allowed.'}, 400
 
     @jwt_required()
     def put(self):
@@ -60,63 +63,61 @@ class ImageUpload(Resource):
 
         # we use a sub folder for each user using the user.id
         user = current_identity
-        folder = 'user_{}'.format(user.id)
-
+        image_helper = ImageModel(user)
+        data['filename'] = image_helper.get_true_filename(**data)
         # check if the image file exists under the current user's folder
-        if not os.path.isfile(image_set.path(data['image'].filename, folder)):
-            return {'message': 'Image <{}> not found.'.format(data['image'].filename)}, 404
+        if not image_helper.exists(data['filename']):
+            return {'message': f'Image <{data["filename"]}> not found.'}, 404
         # update the image if exists
         try:
-            os.remove(image_set.path(data['image'].filename, folder))
-            filename = image_set.save(data['image'], folder)
-            return {'message': 'Image <{}> updated!'.format(os.path.split(filename)[1])}, 200
-        except UploadNotAllowed:    # forbidden file type
-            return {'message': 'Extension <{}> is not allowed.'.format(
-                os.path.splitext(data['image'].filename)[1])}, 400
+            # delete previous file and save new file
+            image_helper.delete_from_disk(data['filename'])
+            updated_file = image_helper.save_to_disk(**data)
+            updated_filename = image_helper.get_basename(updated_file)
+            return {'message': f'Image <{updated_filename}> updated!'}, 200
+        except:
+            # the filename has to be legal thus we do not know what went wrong
+            return {'message': 'Internal server error!'}, 500
 
 
 class Image(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument('filename',
-        type=str,
-        required=True,
-        help='Please specify the filename.'
-    )
 
     @jwt_required()
-    def post(self):
+    def get(self, filename):
         """
         This endpoint returns the requested image if exists. It will use JWT to
         retrieve user information and look for the image inside the user's folder.
         """
-        data = self.parser.parse_args()
-
         user = current_identity
-        folder = 'user_{}'.format(user.id)
+        image_helper = ImageModel(user)
 
+        # check if filename is URL secure
+        if not image_helper.is_filename_safe(filename):
+            return {'message': f'Illegal filename <{filename}> requested.'}, 400
         try:
-            # here we simmply try to send the requested file
-            # to the user with status code 200
-            return send_file(image_set.path(data['filename'], folder))
+            # try to send the requested file to the user with status code 200
+            return send_file(image_helper.get_path(filename))
         except FileNotFoundError:
-            return {'message': 'Image <{}> not found.'.format(data['filename'])}, 404
+            return {'message': f'Image <{filename}> not found.'}, 404
 
     @jwt_required()
-    def delete(self):
+    def delete(self,filename):
         """
         This endpoint is used to delete the requested image under the user's folder.
         It uses the JWT to retrieve user information.
         """
-        data = self.parser.parse_args()
-
         user = current_identity
-        folder = 'user_{}'.format(user.id)
+        image_helper = ImageModel(user)
+
+        # check if filename is URL secure
+        if not image_helper.is_filename_safe(filename):
+            return {'message': f'Illegal filename<{filename}> requested.'}, 400
 
         try:
-            os.remove(image_set.path(data['filename'], folder))
+            image_helper.delete_from_disk(filename)
+            return {'message': f'File <{filename}> deleted!'}, 200
         except FileNotFoundError:
-            return {'message': 'File <{}> not found!'.format(data['filename'])}, 404
+            return {'message': f'File <{filename}> not found!'}, 404
         except:
             traceback.print_exc()
             return {'message': 'Internal Server Error.'}, 500
-        return {'message': 'File <{}> deleted!'.format(data['filename'])}, 200

@@ -7,7 +7,9 @@ from security import authenticate, identity
 from resources.user import UserRegister
 from resources.item import Item, ItemList
 from resources.store import Store, StoreList
-from resources.image import Image,ImageUpload,image_set
+from resources.image import Image,ImageUpload
+from models.image import IMAGE_SET
+import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
@@ -15,9 +17,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'jose'
 api = Api(app)
 
-app.config['UPLOADED_IMAGES_DEST'] = 'static/img'
+app.config['UPLOADED_IMAGES_DEST'] = os.path.join('static','img')
 patch_request_class(app,10 * 1024 * 1024)   # restrict max upload image size to 10MB
-configure_uploads(app,image_set)
+configure_uploads(app,IMAGE_SET)
 
 @app.before_first_request
 def create_tables():
@@ -31,7 +33,7 @@ api.add_resource(Item, '/item/<string:name>')
 api.add_resource(ItemList, '/items')
 api.add_resource(UserRegister, '/register')
 api.add_resource(ImageUpload, '/image/upload')
-api.add_resource(Image, '/image')
+api.add_resource(Image, '/image/<string:filename>')
 
 if __name__ == '__main__':
     from db import db
