@@ -30,9 +30,10 @@ class ImageUpload(Resource):
         """
         data = self.parser.parse_args()
 
-        # we use a sub folder for each user using the user.id
         user = current_identity
+        # ImageModel will use user.id to locate user's folder
         image_helper = ImageModel(user)
+
         data['filename'] = image_helper.get_true_filename(**data)
         if not image_helper.is_filename_safe(data['filename']):
             return {'message': f'Filename <{data["filename"]}> is illegal.'}, 400
