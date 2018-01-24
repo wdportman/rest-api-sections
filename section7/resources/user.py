@@ -31,15 +31,18 @@ class UserRegister(Resource):
 
         user = UserModel(data['username'], data['email'], data['password'])
         user.save_to_db()
+        try:
+            response = user.send_confirmation_email()
+            if response.status_code != 200:
+                print(response.status_code)
+                print(response.json())
+                raise Exception("Error in sending confirmation email, user registration failed.")
+        except Exception as e:
+            user.delete_from_db()  # rollback
+            return {'message': str(e)}, 500
 
-        response = user.send_confirmation_email()
-        if response.status_code == 200:
-            return {'message': 'User created successfully.'}, 201
-        else:
-            user.delete_from_db()   # rollback
-            print(response.status_code)
-            print(response.json())
-            return {'message': 'Internal server error, user registration failed.'}, 500
+        return {'message': 'User created successfully.'}, 201
+
 
 
 class UserConfirm(Resource):

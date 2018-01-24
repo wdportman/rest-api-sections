@@ -12,6 +12,10 @@
     - send a confirmation email to user's registered email
     - after user click the link in the email, a GET request is send to the `/user_confirm/<int:_id>` endpoint, which sets the user's `activated` field to `True`
 
+- Miscellaneous:
+    - Used `os.environ` to retrieve MailGun domain and API key, since it will be consistent with our pattern in previous sections on deploying to Heroku and DigitalOcean.
+    - Raised an `EnvironmentError` with some message when failed to load MailGun config from `os.environ`, and raised an `Exception` when failed to deliver confirmation email via MailGun. When registering a new user, try to catch these exceptions via `except Exception as e` and return the error message in `e`.
+
 - Issues:
     - If having set both `text` and `html` field in MailGun request, the text is not shown.
     - Endpoint url may be compromised in the confirmation email, so anyone can send an arbitrary request to the endpoint to confirm registration without accessing the true email. Is it a problem?

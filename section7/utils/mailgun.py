@@ -2,10 +2,11 @@ import requests, os
 
 
 class Mailgun:
-    # MAILGUN_API_KEY = os.environ.get('MAILGUN_API_KEY', None)
-    # MAILGUN_DOMAIN = os.environ.get('MAILGUN_DOMAIN', None)
-    MAILGUN_API_KEY = 'key-842a1f8f1e0b9640ad5453c29f9d8c69'
-    MAILGUN_DOMAIN = 'sandboxfa8e407562584713beb299a1a3320ad6.mailgun.org'
+    # added for local testing:
+    # os.environ.setdefault('MAILGUN_API_KEY', 'api_key')
+    # os.environ.setdefault('MAILGUN_DOMAIN', 'domain name')
+    MAILGUN_API_KEY = os.environ.get('MAILGUN_API_KEY', None)
+    MAILGUN_DOMAIN = os.environ.get('MAILGUN_DOMAIN', None)
 
     @classmethod
     def send_email(cls, email, subject, text, html):
