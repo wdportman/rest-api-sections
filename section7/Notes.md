@@ -21,4 +21,4 @@
     - Endpoint url may be compromised in the confirmation email, so anyone can send an arbitrary request to the endpoint to confirm registration without accessing the true email. Is it a problem?
     - Did not add any logic in user authentication (to test if the account is activated)
     - Should use a web page to indicate successful confirmation, now only returning a json message.
-    - Consider introducing domain names, since we may have to need one for MailGun. The auto-genrated MailGun domain may not be able to function fully (I can use it to send to my Gmail but not Yahoo mail, and it ask me to do some more configurations).
+    - Consider introducing domain names, since we may have to need one for MailGun. The auto-generated MailGun domain may not be able to function fully (I can use it to send to my Gmail but not Yahoo mail, and it ask me to do some more configurations).
