@@ -7,7 +7,7 @@ from my_resources.my_user import UserRegister
 from my_resources.my_item import Item, ItemList
 
 app = Flask(__name__)
-app.config(['SQLALCHEMY_TRACK_MODIFICATIONS'] = False)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'will'
 api = Api(app)
 
