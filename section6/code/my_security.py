@@ -1,5 +1,5 @@
 from werkzeug.security import safe_str_cmp
-from my_user import User
+from my_resources.my_user import User
 
 def authenticate(username, password):
   user = User.find_by_username(username)

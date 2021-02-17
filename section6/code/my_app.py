@@ -3,8 +3,8 @@ from flask_restful import Api
 from flask_jwt import JWT
 
 from my_security import authenticate, identity
-from my_user import UserRegister
-from my_item import Item, ItemList
+from my_resources.my_user import UserRegister
+from my_resources.my_item import Item, ItemList
 
 app = Flask(__name__)
 app.secret_key = 'will'
