@@ -18,6 +18,9 @@ users = [
   (3, "huck", "password789")
 ]
 
+# create_table_items = "CREATE TABLE items (name text, price int)"
+# cursor.execute(create_table_items)
+
 select_query = "SELECT * FROM users"
 
 cursor.executemany(insert_query, users)
